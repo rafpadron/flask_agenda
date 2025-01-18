@@ -1,18 +1,22 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from models.contact import Contact
+from flask_login import current_user, login_required
 from utils.db import db
+
 
 contacts = Blueprint("contacts", __name__)
 
 
-@contacts.route('/')
+@contacts.route('/contacts')
+@login_required
 def index():
-    contacts = Contact.query.all()
+    contacts = Contact.query.filter_by(user_id=current_user.id).all()
     print(contacts)
     return render_template('index.html', contacts=contacts)
 
 
 @contacts.route('/new', methods=['POST'])
+@login_required
 def add_contact():
     if request.method == 'POST':
 
@@ -22,7 +26,7 @@ def add_contact():
         phone = request.form['phone']
 
         # create a new Contact object
-        new_contact = Contact(fullname, email, phone)
+        new_contact = Contact(user_id=current_user.id, fullname=fullname, email=email, phone=phone)
 
         # save the object into the database
         db.session.add(new_contact)
@@ -34,6 +38,7 @@ def add_contact():
 
 
 @contacts.route("/update/<string:id>", methods=["GET", "POST"])
+@login_required
 def update(id):
     # get contact by Id
     print(id)
@@ -54,6 +59,7 @@ def update(id):
 
 
 @contacts.route("/delete/<id>", methods=["GET"])
+@login_required
 def delete(id):
     contact = Contact.query.get(id)
     db.session.delete(contact)
@@ -65,5 +71,6 @@ def delete(id):
 
 
 @contacts.route("/about")
+@login_required
 def about():
     return render_template("about.html")
